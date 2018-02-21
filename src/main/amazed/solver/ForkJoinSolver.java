@@ -22,6 +22,12 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public class ForkJoinSolver
     extends SequentialSolver
 {
+
+    /**
+     * concurrent list of visited cells
+     */
+    private ConcurrentSkipListSet<Integer> visited;
+
     /**
      * Creates a solver that searches in <code>maze</code> from the
      * start node to a goal.
@@ -31,7 +37,11 @@ public class ForkJoinSolver
     public ForkJoinSolver(Maze maze)
     {
         super(maze);
+        visited = new ConcurrentSkipListSet<>();
+
     }
+
+
 
     /**
      * Creates a solver that searches in <code>maze</code> from the
@@ -64,6 +74,7 @@ public class ForkJoinSolver
     @Override
     public List<Integer> compute()
     {
+        System.out.println("This parallel thead is doing this");
         return parallelSearch();
     }
 
@@ -71,4 +82,11 @@ public class ForkJoinSolver
     {
         return null;
     }
+
 }
+
+/* QUESTIONS
+     --When do we actually need to join?
+     --Shared data? concurrentSkiplist
+     --ForkAfter?
+ */

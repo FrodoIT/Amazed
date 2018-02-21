@@ -80,6 +80,7 @@ public class SequentialSolver
      * search.
      */
     protected Set<Integer> visited;
+
     /**
      * If <code>(m -&gt; n)</code> is in <code>precedessor</code>, then
      * the node with identifier <code>n</code> has been first visited
