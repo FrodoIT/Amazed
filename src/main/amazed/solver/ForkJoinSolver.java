@@ -2,11 +2,7 @@ package amazed.solver;
 
 import amazed.maze.Maze;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
@@ -26,7 +22,9 @@ public class ForkJoinSolver
     /**
      * concurrent list of visited cells
      */
-    private ConcurrentSkipListSet<Integer> visited;
+    private static ConcurrentSkipListSet<Integer> visited = new ConcurrentSkipListSet<>();
+
+    private Integer current = start;
 
     /**
      * Creates a solver that searches in <code>maze</code> from the
@@ -37,8 +35,11 @@ public class ForkJoinSolver
     public ForkJoinSolver(Maze maze)
     {
         super(maze);
-        visited = new ConcurrentSkipListSet<>();
+    }
 
+    public ForkJoinSolver(Maze maze, Integer start){
+        this(maze);
+        current = start;
     }
 
 
@@ -74,12 +75,73 @@ public class ForkJoinSolver
     @Override
     public List<Integer> compute()
     {
-        System.out.println("This parallel thead is doing this");
         return parallelSearch();
     }
 
     private List<Integer> parallelSearch()
     {
+
+        //needs to take current, and not start
+        int player = maze.newPlayer(current);
+
+        frontier.push(current);
+
+        while (!frontier.empty()){
+
+            int current = frontier.pop();
+
+            if (maze.hasGoal(current)) {
+                // move player to goal
+                maze.move(player, current);
+                // search finished: reconstruct and return path
+                return pathFromTo(start, current);
+            }
+
+            if (!visited.contains(current)) {
+                // move player to current node
+                maze.move(player, current);
+                // mark node as visited
+                visited.add(current);
+
+                Iterator<Integer> neighbors = maze.neighbors(current).iterator();
+                List<Integer> unvisiteds = new ArrayList<>();
+
+                //Add all unvisited neighbors
+                while (neighbors.hasNext()){
+
+                    Integer nextNeighbor = neighbors.next();
+
+                    if(!visited.contains(nextNeighbor)){
+                        unvisiteds.add(nextNeighbor);
+                    }
+                }
+
+                Iterator<Integer> unvisitedIter = unvisiteds.iterator();
+
+                //no gaffel for the first
+                if(unvisitedIter.hasNext()) {
+                    frontier.push(unvisitedIter.next());
+                }
+                else{
+                    return null;
+                }
+                while (unvisitedIter.hasNext()){
+                    ForkJoinSolver newSolver = new ForkJoinSolver(maze, unvisitedIter.next());
+                    newSolver.fork();
+                }
+
+
+                System.out.println("preparing to loop");
+
+
+                //The forking
+                //while (neighbors.hasNext()){
+                    //FORK
+                //}
+
+            }
+        }
+
         return null;
     }
 
@@ -89,4 +151,5 @@ public class ForkJoinSolver
      --When do we actually need to join?
      --Shared data? concurrentSkiplist
      --ForkAfter?
+     --Constructor for ForkJoinSolver
  */
