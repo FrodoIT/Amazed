@@ -132,9 +132,7 @@ public class ForkJoinSolver
 
                     for (ForkJoinTask<List<Integer>> fork:forks) {
                         List<Integer> path = fork.join();
-                        System.out.println(path);
                         if(path != null){
-                            System.out.println("FOUND PATH");
                             return path;
                         }
                     }
@@ -142,7 +140,9 @@ public class ForkJoinSolver
 
                 }
                 else if(unvisiteds.size() == 1){
-                    frontier.push(unvisitedIter.next());
+                    Integer next = unvisitedIter.next();
+                    this.predecessor.put(next, current);
+                    frontier.push(next);
                 }
         }
         //dead end return the result of joining
