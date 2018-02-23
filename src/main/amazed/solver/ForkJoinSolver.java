@@ -4,6 +4,7 @@ import amazed.maze.Maze;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ForkJoinTask;
 
 /**
  * <code>ForkJoinSolver</code> implements a solver for
@@ -37,9 +38,10 @@ public class ForkJoinSolver
         super(maze);
     }
 
-    public ForkJoinSolver(Maze maze, Integer start){
+    public ForkJoinSolver(Maze maze, Integer start, Map predecessors){
         this(maze);
         current = start;
+        this.predecessor = predecessors;
     }
 
 
@@ -81,7 +83,6 @@ public class ForkJoinSolver
     private List<Integer> parallelSearch()
     {
 
-        //needs to take current, and not start
         int player = maze.newPlayer(current);
 
         frontier.push(current);
@@ -91,57 +92,60 @@ public class ForkJoinSolver
             int current = frontier.pop();
 
             if (maze.hasGoal(current)) {
+                System.out.println("GOAL WAS FOUND");
                 // move player to goal
                 maze.move(player, current);
                 // search finished: reconstruct and return path
                 return pathFromTo(start, current);
             }
 
-            if (!visited.contains(current)) {
-                // move player to current node
-                maze.move(player, current);
-                // mark node as visited
-                visited.add(current);
+            // move player to current node
+            maze.move(player, current);
+            // mark node as visited
+            visited.add(current);
 
-                Iterator<Integer> neighbors = maze.neighbors(current).iterator();
-                List<Integer> unvisiteds = new ArrayList<>();
+            Iterator<Integer> neighbors = maze.neighbors(current).iterator();
+            List<Integer> unvisiteds = new ArrayList<>();
 
-                //Add all unvisited neighbors
-                while (neighbors.hasNext()){
+            //Add all unvisited neighbors
+            while (neighbors.hasNext()){
 
-                    Integer nextNeighbor = neighbors.next();
+                Integer nextNeighbor = neighbors.next();
 
-                    if(!visited.contains(nextNeighbor)){
+                if(!visited.contains(nextNeighbor)) {
                         unvisiteds.add(nextNeighbor);
                     }
                 }
 
                 Iterator<Integer> unvisitedIter = unvisiteds.iterator();
 
-                //no gaffel for the first
-                if(unvisitedIter.hasNext()) {
+                if(unvisiteds.size() > 1){
+
+                    ArrayList<ForkJoinTask<List<Integer>>> forks = new ArrayList<>();
+
+                    while (unvisitedIter.hasNext()){
+                        Integer next = unvisitedIter.next();
+                        this.predecessor.put(next, current);
+                        ForkJoinSolver newSolver = new ForkJoinSolver(maze, next,this.predecessor);
+                        forks.add(newSolver.fork());
+                    }
+
+                    for (ForkJoinTask<List<Integer>> fork:forks) {
+                        List<Integer> path = fork.join();
+                        System.out.println(path);
+                        if(path != null){
+                            System.out.println("FOUND PATH");
+                            return path;
+                        }
+                    }
+                    return null;
+
+                }
+                else if(unvisiteds.size() == 1){
                     frontier.push(unvisitedIter.next());
                 }
-                else{
-                    return null;
-                }
-                while (unvisitedIter.hasNext()){
-                    ForkJoinSolver newSolver = new ForkJoinSolver(maze, unvisitedIter.next());
-                    newSolver.fork();
-                }
-
-
-                System.out.println("preparing to loop");
-
-
-                //The forking
-                //while (neighbors.hasNext()){
-                    //FORK
-                //}
-
-            }
         }
-
+        //dead end return the result of joining
         return null;
     }
 
