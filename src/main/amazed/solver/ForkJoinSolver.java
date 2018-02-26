@@ -5,6 +5,7 @@ import amazed.maze.Maze;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * <code>ForkJoinSolver</code> implements a solver for
@@ -24,7 +25,8 @@ public class ForkJoinSolver
      * concurrent list of visited cells
      */
     private static ConcurrentSkipListSet<Integer> visited = new ConcurrentSkipListSet<>();
-
+    private static AtomicBoolean finished = new AtomicBoolean();
+    private int stepCounter = 0;
     private Integer current = start;
 
     /**
@@ -87,12 +89,12 @@ public class ForkJoinSolver
 
         frontier.push(current);
 
-        while (!frontier.empty()){
+        while (!frontier.empty() && !finished.get()){
 
             int current = frontier.pop();
 
             if (maze.hasGoal(current)) {
-                System.out.println("GOAL WAS FOUND");
+                finished.set(true);
                 // move player to goal
                 maze.move(player, current);
                 // search finished: reconstruct and return path
@@ -119,7 +121,9 @@ public class ForkJoinSolver
 
                 Iterator<Integer> unvisitedIter = unvisiteds.iterator();
 
-                if(unvisiteds.size() > 1){
+
+
+                if(unvisiteds.size() > 1 && (stepCounter >= forkAfter)){
 
                     ArrayList<ForkJoinTask<List<Integer>>> forks = new ArrayList<>();
 
@@ -139,11 +143,14 @@ public class ForkJoinSolver
                     return null;
 
                 }
-                else if(unvisiteds.size() == 1){
-                    Integer next = unvisitedIter.next();
-                    this.predecessor.put(next, current);
-                    frontier.push(next);
+                else{
+                    while(unvisitedIter.hasNext()){
+                        Integer next = unvisitedIter.next();
+                        this.predecessor.put(next, current);
+                        frontier.push(next);
+                    }
                 }
+                this.stepCounter ++;
         }
         //dead end return the result of joining
         return null;
