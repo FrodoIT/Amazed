@@ -89,9 +89,10 @@ public class ForkJoinSolver
         if(visited.contains(current)){
             return null;
         }
+/*
         //mark node as visited
         visited.add(current);
-        
+*/
         //create the player
         int player = maze.newPlayer(current);
         
