@@ -82,10 +82,14 @@ public class Amazed
         System.out.println("Initialized solver");
         path = pool.invoke(solver);
         System.out.println("Solver finished");
-        if (path != null && maze.isValidPath(path))
+        if (path != null && maze.isValidPath(path)) {
             System.out.println("Goal found :-D");
-        else
+        }
+
+        else {
             System.out.println("Search completed: no goal found :-(");
+        }
+
         pool.shutdown();
     }
 

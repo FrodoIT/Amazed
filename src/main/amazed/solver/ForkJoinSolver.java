@@ -27,7 +27,7 @@ public class ForkJoinSolver
     private static ConcurrentSkipListSet<Integer> visited = new ConcurrentSkipListSet<>();
     private static AtomicBoolean finished = new AtomicBoolean();
     private int stepCounter = 0;
-    private Integer current = start;
+    private int current = start;
 
     /**
      * Creates a solver that searches in <code>maze</code> from the
@@ -40,10 +40,11 @@ public class ForkJoinSolver
         super(maze);
     }
 
-    public ForkJoinSolver(Maze maze, Integer start, Map predecessors){
+    public ForkJoinSolver(Maze maze, int start, Map predecessors, int forkAfter){
         this(maze);
         current = start;
         this.predecessor = predecessors;
+        this.forkAfter = forkAfter;
     }
 
 
@@ -85,6 +86,10 @@ public class ForkJoinSolver
     private List<Integer> parallelSearch()
     {
 
+        //initialize this solver
+        if(visited.contains(current)){
+            return null;
+        }
         int player = maze.newPlayer(current);
 
         frontier.push(current);
@@ -94,6 +99,7 @@ public class ForkJoinSolver
             int current = frontier.pop();
 
             if (maze.hasGoal(current)) {
+                System.out.println("GOAL!");
                 finished.set(true);
                 // move player to goal
                 maze.move(player, current);
@@ -101,37 +107,27 @@ public class ForkJoinSolver
                 return pathFromTo(start, current);
             }
 
-            // move player to current node
-            maze.move(player, current);
+            if(visited.contains(current)){
+               continue;
+            }
             // mark node as visited
             visited.add(current);
+            // move player to current node
+            maze.move(player, current);
 
-            Iterator<Integer> neighbors = maze.neighbors(current).iterator();
-            List<Integer> unvisiteds = new ArrayList<>();
+            Set<Integer> neighbors = maze.neighbors(current);
 
-            //Add all unvisited neighbors
-            while (neighbors.hasNext()){
-
-                Integer nextNeighbor = neighbors.next();
-
-                if(!visited.contains(nextNeighbor)) {
-                        unvisiteds.add(nextNeighbor);
-                    }
-                }
-
-                Iterator<Integer> unvisitedIter = unvisiteds.iterator();
-
-
-
-                if(unvisiteds.size() > 1 && (stepCounter >= forkAfter)){
-
+                // more than 2 equals two or more roads not visited by current fork. size is always at least 1 (the previous)
+                if(neighbors.size() > 2 && stepCounter >= forkAfter){
+                    System.out.println("GAFFEEEEEEL!");
                     ArrayList<ForkJoinTask<List<Integer>>> forks = new ArrayList<>();
 
-                    while (unvisitedIter.hasNext()){
-                        Integer next = unvisitedIter.next();
-                        this.predecessor.put(next, current);
-                        ForkJoinSolver newSolver = new ForkJoinSolver(maze, next,this.predecessor);
-                        forks.add(newSolver.fork());
+                    for(int nb:neighbors){
+                        if(!visited.contains(nb)){
+                            predecessor.put(nb, current);
+                            ForkJoinSolver newSolver = new ForkJoinSolver(maze, nb,predecessor, forkAfter);
+                            forks.add(newSolver.fork());
+                        }
                     }
 
                     for (ForkJoinTask<List<Integer>> fork:forks) {
@@ -140,14 +136,19 @@ public class ForkJoinSolver
                             return path;
                         }
                     }
+                    if(!frontier.empty()) {
+                        continue;
+                    }
                     return null;
 
                 }
                 else{
-                    while(unvisitedIter.hasNext()){
-                        Integer next = unvisitedIter.next();
-                        this.predecessor.put(next, current);
-                        frontier.push(next);
+                    System.out.println("Jag fick inga bestick");
+                    for(int nb: neighbors){
+                        if(!visited.contains(nb)){
+                            predecessor.put(nb, current);
+                            frontier.push(nb);
+                        }
                     }
                 }
                 this.stepCounter ++;
