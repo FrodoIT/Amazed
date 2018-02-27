@@ -86,11 +86,12 @@ public class ForkJoinSolver
     private List<Integer> parallelSearch()
     {
         //initialize this solver
+
         if(visited.contains(current)){
             return null;
         }
 
-        //mark node as visited
+        //mark start node as visited
         visited.add(current);
 
         //create the player
@@ -99,10 +100,15 @@ public class ForkJoinSolver
         //push the current node to frontier
         frontier.push(current);
 
+        /*
+        makes the solver ignore that it's starting position is
+        already visited since new player must spawn on a space
+         */
         boolean firstIteration = true;
 
         //enter the search loop
         while (!frontier.empty() && !finished.get()){
+
             //take out the node next up for examination and call it "current"
             int current = frontier.pop();
             
