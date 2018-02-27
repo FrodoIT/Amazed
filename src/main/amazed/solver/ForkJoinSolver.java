@@ -28,7 +28,6 @@ public class ForkJoinSolver
     private static AtomicBoolean finished = new AtomicBoolean();
     private int stepCounter = 0;
     private int current = start;
-    private boolean hasPlayer = false;
 
     /**
      * Creates a solver that searches in <code>maze</code> from the
