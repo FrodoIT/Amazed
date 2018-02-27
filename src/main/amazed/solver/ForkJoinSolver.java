@@ -28,6 +28,7 @@ public class ForkJoinSolver
     private static AtomicBoolean finished = new AtomicBoolean();
     private int stepCounter = 0;
     private int current = start;
+    private boolean hasPlayer = false;
 
     /**
      * Creates a solver that searches in <code>maze</code> from the
@@ -89,15 +90,17 @@ public class ForkJoinSolver
         if(visited.contains(current)){
             return null;
         }
-/*
+
         //mark node as visited
         visited.add(current);
-*/
+
         //create the player
         int player = maze.newPlayer(current);
-        
+
         //push the current node to frontier
         frontier.push(current);
+
+        boolean firstIteration = true;
 
         //enter the search loop
         while (!frontier.empty() && !finished.get()){
@@ -106,7 +109,6 @@ public class ForkJoinSolver
             
             //check if current is a goal
             if (maze.hasGoal(current)) {
-                System.out.println("GOAL!");
                 //set the shared variable to inform everyone that the search is finished
                 finished.set(true);
                 //move player to goal
@@ -117,9 +119,10 @@ public class ForkJoinSolver
             
             //current was not goal
             //so now check if current is already visited. if so, skip the rest of the iteration
-            if(visited.contains(current)){
+            if(visited.contains(current) && !firstIteration){
                continue;
             }
+            else if(firstIteration) firstIteration = false;
             // mark node as visited
             visited.add(current);
             //move player to current
@@ -130,7 +133,6 @@ public class ForkJoinSolver
             //if there are more than one nodes to choose between for the next step, and there have been enough steps since last fork, do forking
             // ("> 2" means two or more not visited by current fork. size is always at least 1 (the previous will always be there))
             if(neighbors.size() > 2 && stepCounter >= forkAfter){
-                System.out.println("GAFFEEEEEEL!"); //TODO remove debug print
                 //make list to keep track of the forked tasks
                 ArrayList<ForkJoinTask<List<Integer>>> forks = new ArrayList<>();
                 //go through all the neighbors of current
@@ -163,7 +165,6 @@ public class ForkJoinSolver
             }
             //else if it was not time to fork
             else {
-                System.out.println("Jag fick inga bestick");
                 //for each of the neighbors
                 for(int nb: neighbors){
                     //if not visited
@@ -183,9 +184,3 @@ public class ForkJoinSolver
     }
 }
 
-/* QUESTIONS
-     --When do we actually need to join?
-     --Shared data? concurrentSkiplist
-     --ForkAfter?
-     --Constructor for ForkJoinSolver
- */
