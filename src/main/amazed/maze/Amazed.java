@@ -83,6 +83,7 @@ public class Amazed
         path = pool.invoke(solver);
         System.out.println("Solver finished");
         if (path != null && maze.isValidPath(path)) {
+
             System.out.println("Goal found :-D");
         }
 
