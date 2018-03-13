@@ -1,3 +1,9 @@
+/*
+TDA416
+Group: 12
+Rasmus Tomasson (rastom), Sofia Larborn (soflarb)
+ */
+
 package amazed.solver;
 
 import amazed.maze.Maze;
@@ -86,14 +92,12 @@ public class ForkJoinSolver
     private List<Integer> parallelSearch()
     {
         //initialize this solver
-
-        if(visited.contains(current)){
+        //if current is already in visited, this will return false
+        //otherwise, we have added current to visited
+        if(!visited.add(current)){
             return null;
         }
-
-        //mark start node as visited
-        visited.add(current);
-
+        
         //create the player
         int player = maze.newPlayer(current);
 
