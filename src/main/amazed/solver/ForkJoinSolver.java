@@ -127,13 +127,16 @@ public class ForkJoinSolver
             }
             
             //current was not goal
-            //so now check if current is already visited. if so, skip the rest of the iteration
-            if(visited.contains(current) && !firstIteration){
+            //so now try to add current to visited
+            // if current is already visited, it won't be added and it returns false
+            // if so, skip the rest of the iteration
+            //  in case it was not the first iteration, which is the exception where 
+            //   current will be added before this step
+            if(!visited.add(current) && !firstIteration){
                continue;
             }
             else if(firstIteration) firstIteration = false;
-            // mark node as visited
-            visited.add(current);
+
             //move player to current
             maze.move(player, current);
             //get the neighbors of current
